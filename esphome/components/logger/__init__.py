@@ -6,7 +6,7 @@ from esphome import automation
 from esphome.automation import LambdaAction
 from esphome.const import CONF_ARGS, CONF_BAUD_RATE, CONF_FORMAT, CONF_HARDWARE_UART, CONF_ID, \
     CONF_LEVEL, CONF_LOGS, CONF_ON_MESSAGE, CONF_TAG, CONF_TRIGGER_ID, CONF_TX_BUFFER_SIZE
-from esphome.core import CORE, EsphomeError, Lambda, coroutine_with_priority
+from esphome.core import CORE, Lambda, coroutine_with_priority
 
 CODEOWNERS = ['@esphome/core']
 logger_ns = cg.esphome_ns.namespace('logger')
@@ -60,15 +60,6 @@ def uart_selection(value):
     raise NotImplementedError
 
 
-def validate_local_no_higher_than_global(value):
-    global_level = value.get(CONF_LEVEL, 'DEBUG')
-    for tag, level in value.get(CONF_LOGS, {}).items():
-        if LOG_LEVEL_SEVERITY.index(level) > LOG_LEVEL_SEVERITY.index(global_level):
-            raise EsphomeError("The local log level {} for {} must be less severe than the "
-                               "global log level {}.".format(level, tag, global_level))
-    return value
-
-
 Logger = logger_ns.class_('Logger', cg.Component)
 LoggerMessageTrigger = logger_ns.class_('LoggerMessageTrigger',
                                         automation.Trigger.template(cg.int_, cg.const_char_ptr,
@@ -91,7 +82,7 @@ CONFIG_SCHEMA = cv.All(cv.Schema({
 
     cv.SplitDefault(CONF_ESP8266_STORE_LOG_STRINGS_IN_FLASH, esp8266=True):
         cv.All(cv.only_on_esp8266, cv.boolean),
-}).extend(cv.COMPONENT_SCHEMA), validate_local_no_higher_than_global)
+}).extend(cv.COMPONENT_SCHEMA))
 
 
 @coroutine_with_priority(90.0)
